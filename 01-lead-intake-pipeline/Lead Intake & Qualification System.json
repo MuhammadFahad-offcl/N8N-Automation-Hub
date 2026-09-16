@@ -1,0 +1,144 @@
+{
+  "name": "Lead Intake & Qualification System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        -352
+      ],
+      "id": "71de0eb4-0e8d-46e9-8919-16ba37670920",
+      "name": "Webhook",
+      "webhookId": "dc607d27-db3c-42ad-b1b0-6298d783c3c3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\n\nreturn {\n  json: {\n    name: body.name?.trim() || \"\",\n    email: body.email?.trim().toLowerCase() || \"\",\n    phone: body.phone?.replace(/\\s+/g, \"\") || \"\",\n    message: body.message?.trim() || \"\",\n    source: \"landing_page\",\n    received_at: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -352
+      ],
+      "id": "50c6c0bb-7031-4546-8fb9-323bf2974853",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (name, email, phone, message, source, received_at)\nVALUES (\n  '{{ $json.name }}',\n  '{{ $json.email }}',\n  '{{ $json.phone }}',\n  '{{ $json.message }}',\n  '{{ $json.source }}',\n  STR_TO_DATE('{{ $json.received_at }}', '%Y-%m-%dT%H:%i:%s')\n)\nON DUPLICATE KEY UPDATE\n  name = VALUES(name),\n  phone = VALUES(phone),\n  message = VALUES(message),\n  source = VALUES(source),\n  received_at = VALUES(received_at);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        192,
+        -352
+      ],
+      "id": "88f626a4-7a2d-4f74-9a64-3006ce525d47",
+      "name": "Execute a SQL query"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        -352
+      ],
+      "id": "0c211efd-b61a-4f71-aecb-c94acf9ba945",
+      "name": "Send message",
+      "webhookId": "76d3740b-61a0-4461-a48c-712b0680d101",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "DvtXP6a4oAhoIyjF",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        640,
+        -352
+      ],
+      "id": "1a326e27-adff-47b0-8517-814d7fe42453",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "05cedffd-a737-43dc-a1a9-42c9b7b862d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b068737fdfca3da86bdea689dd5aecdc68a9986c3fc030f1b4c08d3923740617"
+  },
+  "nodeGroups": [],
+  "id": "oK9FKUPfd3WFacxz",
+  "tags": []
+}
